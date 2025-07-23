@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from matplotlib import pyplot as plt
+import numpy as np
 
 
 weight = 0.8
@@ -28,10 +29,12 @@ class LinearRegressionModel(nn.Module):
         weights=0.7
         bias=0.3
         super(). __init__()
+        self.linear = torch.nn.Linear(1,1)
         self.weights = nn.Parameter(torch.rand(1, requires_grad=True, dtype=torch.float))
         self.bias = nn.Parameter(torch.rand(1, requires_grad=True, dtype=torch.float))
     def forward(self, x: torch.Tensor):
-        print(self.weights * self.bias)
+        return self.linear(x)
+        return self.weights * self.bias
 
 
 #check model parameter
@@ -59,9 +62,85 @@ with torch.no_grad():
 #set a loss function
 
 lf = nn.L1Loss()
-print(lf)
+# print(lf)
 
 # #set optimizer
 params = m.parameters()
 opt = torch.optim.SGD(params=m.parameters(), lr=0.01)
-print(opt)
+# print(opt)
+
+
+#training loop intution 
+
+epochs=100
+
+epoch_count=[]
+loss_values=[]
+test_loss_values=[]
+
+for epoch in range (epochs):
+    m.train()
+    preds = m(x_train)
+    # print(preds)
+    loss = lf(preds,y_train)
+    # print(loss)
+    opt.zero_grad()
+    loss.backward()
+    opt.step()
+    m.eval()
+    with torch.inference_mode():
+        tp =m(x_test)
+        # print(tp)
+    # m.state_dict()
+        tl = lf(tp,y_test)
+if epoch % 10 == 0:
+    epoch_count.append(epoch)
+    loss_values.append(loss)
+    test_loss_values.append(tl)
+
+    # print(f"epoch:{epoch} | loss: {loss} | test_loss:{tl}")
+    pn = m(x_test)
+    # print(pn)
+
+
+    # np.arry(torch.tensor(loss_values).numpy()), test_loss_values
+    # plt.plot(epoch_count, np.array(torch.tensor(loss_values).numpy()), label='train loss')
+    # plt.plot(epoch_count, test_loss_values, label='test loss')
+    # plt.title("training and test loss curves")
+    # plt.xlabel("epochs")
+    # plt.ylabel("loss")
+    # plt.legend()
+    # plt.show()
+
+
+#saving our pytorch model
+from pathlib import Path
+
+mp = Path("models")
+mp.mkdir(parents=True, exist_ok=True)
+
+#create model
+mn = "pytorch_workflow_model.path"
+msp = mp / mn
+# print(msp)
+
+#save the model
+# print(f"saving model to:{msp}")
+torch.save(m.state_dict(), f = msp)
+# print(f"model saved to: {msp}")
+# print( !ls -l models)
+
+#loading a pytorch
+# print(m.state_dict())
+loaded_m = LinearRegressionModel()
+# print(loaded_m.load_state_dict(torch.load(f=msp)))
+# print(m.state_dict())
+
+#making some predictions 
+loaded_m.eval()
+with torch.inference_mode():
+    loaded_m_preds = loaded_m(x_test)
+# print(loaded_m_preds)
+
+print(preds == loaded_m_preds)
+
