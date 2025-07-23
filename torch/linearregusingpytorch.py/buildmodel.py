@@ -16,12 +16,14 @@ train_split = int(0.8 * len(x))
 x_train , y_train = x[: train_split], y[: train_split]
 x_test, y_test = x[train_split :], y[train_split :]
 
+
 def plot_predictions(train_data = x_train, train_laels = y_train, test_data = x_test, test_labels= y_test, pred=None):
-    plt.figure(figsize=(8,8))
-    plt.scatter(train_data, train_laels, c='b', s=4, labels="training data")
-    plt.scatter(test_data, test_labels, c='g', s=4, labels="testing data")
-    if pred is not None:
-        plt.scatter(test_data, pred, c='r', s=4, labels="predictions")
+    # plt.figure(figsize=(8,8))
+    # plt.scatter(train_data, train_laels, c='b', s=4, labels="training data")
+    # plt.scatter(test_data, test_labels, c='g', s=4, labels="testing data")
+    # if pred is not None:
+    #     plt.scatter(test_data, pred, c='r', s=4, labels="predictions")
+    plot_predictions(x_train,y_train,x_test,y_test)
 
 
 class LinearRegressionModel(nn.Module):
@@ -114,19 +116,19 @@ if epoch % 10 == 0:
 
 
 #saving our pytorch model
-from pathlib import Path
+# from pathlib import Path
 
-mp = Path("models")
-mp.mkdir(parents=True, exist_ok=True)
+# mp = Path("models")
+# mp.mkdir(parents=True, exist_ok=True)
 
-#create model
-mn = "pytorch_workflow_model.path"
-msp = mp / mn
-# print(msp)
+# #create model
+# mn = "pytorch_workflow_model.path"
+# msp = mp / mn
+# # print(msp)
 
 #save the model
 # print(f"saving model to:{msp}")
-torch.save(m.state_dict(), f = msp)
+# torch.save(m.state_dict(), f = msp)
 # print(f"model saved to: {msp}")
 # print( !ls -l models)
 
@@ -142,5 +144,17 @@ with torch.inference_mode():
     loaded_m_preds = loaded_m(x_test)
 # print(loaded_m_preds)
 
-print(preds == loaded_m_preds)
+# print(preds == loaded_m_preds)
 
+#building a linear model
+
+class LinearRegressionModelv2(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.linear_layer = nn.Linear(in_features=1, out_features=1)
+    def forward(self, x: torch.tensor):
+        return self.linear_layer(x)
+torch.manual_seed(42)
+m1 =LinearRegressionModelv2()
+print(m1, m1.state_dict())
