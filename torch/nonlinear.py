@@ -86,7 +86,7 @@ preds = torch.round(torch.sigmoid(y_logits))
 
     #calculate loss/accuracy
 loss = lf(y_logits, y1)
-print(lf, loss)
+# print(lf, loss)
 acc = accuracy_fn(y_true=y1, pred=preds)
 # print("accuracy:", acc)
 
@@ -115,13 +115,32 @@ with torch.inference_mode():
 # if epochs % 100 == 0:
 #     print(f"epoch: {epochs} | loss:{loss.item():.4f}, accuracy:{acc:.2f}% | test loss:{test_loss.item():.4f}, test acc:{test_acc:2f}")
 
-from helper_functions import plot_predictions, plot_decision_boundary
+# from helper_functions import plot_predictions, plot_decision_boundary
 
-plt.figure(figsize=(10,8))
-plt.subplot(1,2,1)
-plt.title("Train")
-plot_decision_boundary(m3, x1, y1)
-plt.subplot(1,2,2)
-plt.title("Test")
-plot_decision_boundary(m3, x2, y2)
+# plt.figure(figsize=(10,8))
+# plt.subplot(1,2,1)
+# plt.title("Train")
+# plot_decision_boundary(m3, x1, y1)
+# plt.subplot(1,2,2)
+# plt.title("Test")
+# plot_decision_boundary(m3, x2, y2)
+# plt.show()
+
+#creating tensor
+a = torch.arange(-10,10,1, dtype=torch.float32)
+# print(a.dtype, a)
+plt.plot(a)
+plt.plot(torch.relu(a))
+# plt.show()
+
+def relu(x: torch.Tensor):
+    return torch.maximum(torch.tensor(0), x)
+# print(relu(a))
+
+plt.plot(relu(a));
 plt.show()
+
+def sigmoid(x):
+    return 1 / (1 + torch.exp(-x))
+plt.plot(torch.sigmoid(a));
+
