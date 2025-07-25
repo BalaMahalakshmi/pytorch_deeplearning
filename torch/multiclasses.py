@@ -3,6 +3,7 @@ from  matplotlib import pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import train_test_split
 from torch import nn
+from torchmetrics import Accuracy
 
 num_classes=4
 num_features=2
@@ -29,6 +30,7 @@ def accuracy_fn(y_true, pred):
     correct = torch.eq(y_true, pred).sum().item()
     acc = (correct/len(pred))*100
     # print(acc)
+
 
 #multiclas classification model
 class Blobmodel(nn.Module):
@@ -108,9 +110,38 @@ for epoch in range(epochs):
         tl = m4(x_blob2)
         tp = torch.softmax(tl, dim=1).argmax(dim=1)
         te_loss = loss_fn(tl, y_blob2.long())
-        print("test loss:", te_loss)
+        # print("test loss:", te_loss)
         te_acc =accuracy_fn(y_true=y_blob2, pred=tp)
-        print("test acc:", te_acc)
+        # print("test acc:", te_acc)
 
 if epochs % 10 == 0:
-    print(f"epoch:{epochs} | loss;{loss:.4f}, acc:{acc:.2f} % | test loss:{te_loss:.4f}, test acc:{te_acc:.2f}%")
+    # print(f"epoch:{epochs} | loss;{loss:.4f}, acc:{acc:.2f} % | test loss:{te_loss:.4f}, test acc:{te_acc:.2f}%")
+
+
+
+#make predictions
+
+ m4.eval()
+ with torch.inference_mode():
+     y_logits = m4(x_blob2)
+# print(x_blob2[:10])
+
+y_pred_probs =torch.softmax(y_logits, dim=1)
+# print(y_pred_probs[:10])
+# print(y_blob2)
+
+
+from helper_functions import plot_predictions, plot_decision_boundary
+plt.figure(figsize=(10,8))
+plt.subplot(1,2,1)
+plt.title("Train")
+plot_decision_boundary(m4, x_blob1, y_blob1)
+plt.subplot(1,2,2)
+plt.title("Test")
+plot_decision_boundary(m4, x_blob2, y_blob2)
+# plt.show()
+
+#accuracy 
+
+tm = Accuracy()
+# print(tm(y_pred, y_blob2))
