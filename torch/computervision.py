@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 import requests
 from pathlib import Path
-from helper_functions import accuracy_fn
+# from helper_functions import accuracy_fn
 from timeit import default_timer as timer 
 from tqdm import tqdm
 
@@ -196,7 +196,7 @@ model_0_results = eval_model(model=m0,
                              data_loader=test_dataloader,
                              loss_fn=loss,
                              accuracy_fn=accuracy_fn)
-model_0_results
+# model_0_results
 
 
 
@@ -224,3 +224,79 @@ m1 = FashionMNISTModelv1(input_shapes=784,
                          hidden_units=10,
                          output_shapes=len(class_name)).to("cpu")
 # print(next(m0.parameters()).device)
+
+
+device ="cuda" if torch.cuda.is_available() else "cpu"
+
+def train_step(model: torch.nn.Module,
+               data_loader: torch.utils.data.dataloader,
+               loss_fn: torch.nn.Module,
+               optimizer: torch.optim.Optimizer,
+               accuracy_fn,
+               device: torch.device = None):
+    train_loss, train_acc = 0,0
+    model.train()
+
+    for batch, (x,y) in enumerate(train_dataloader):
+        x,y = x.to(device), y.to(device)
+        pred_y = model(x)
+        loss = lf(pred_y, y)
+        train_loss += loss
+        train_acc += accuracy_fn(y_true=y, pred=pred_y.argmax(dim=1))
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    train_loss /= len(data_loader)
+    train_acc /= len(data_loader)
+    # print(f"Train loss: {train_loss:.5f} | Train_acc: {train_acc}")
+
+    
+def test_step(model: torch.nn.Module,
+               data_loader: torch.utils.data.dataloader,
+               loss_fn: torch.nn.Module,
+               optimizer: torch.optim.Optimizer,
+               accuracy_fn,
+               device: torch.device = None):
+    test_loss, test_acc = 0,0
+    model.eval()
+    with torch.inference_mode():
+        for x, y in data_loader:
+            x,y = x.to(device), y.to(device)
+            test_pred = model(x)
+            test_loss += loss_fn(test_pred, y)
+            test_acc += accuracy_fn(y_true=y, pred=test_pred.argmax(dim=1))
+    test_loss = test_loss/ len(data_loader)
+    test_acc = test_acc / len(data_loader)
+    # print(f"Test loss: {test_loss:.5f} | Test acc: {test_acc}%n")
+
+
+    torch.manual_seed(42)
+train_time_start_on_cpu = timer()
+epochs = 3
+for epoch in tqdm(range(epochs)):
+    # print(f"epoch:{epoch}\n----")
+    train_step(model=m1,
+               data_loader=train_dataloader,
+               loss_fn=lf,
+               optimizer=optim,
+               accuracy_fn=accuracy_fn,
+               device=device)
+    test_step(model=m1,
+               data_loader=train_dataloader,
+               loss_fn=lf,
+               optimizer=optim,
+               accuracy_fn=accuracy_fn,
+               device=device)
+    train_time_end_on_cpu=timer()
+    total_train_time_m1 = print_train_time(start=train_time_start_on_cpu,
+                                           end=train_time_end_on_cpu,
+                                           device=device)
+model_0_results
+
+
+m1_results = eval_model(model=m1,
+                        data_loader=test_dataloader,
+                        loss_fn=lf,
+                        accuracy_fn=accuracy_fn,
+                        )
+m1_results
