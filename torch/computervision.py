@@ -9,8 +9,10 @@ from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 import requests
 from pathlib import Path
-# from helper_functions import accuracy_fn
+from helper_functions import accuracy_fn
 from timeit import default_timer as timer 
+from tqdm import tqdm
+
 
 # print(torch.__version__)
 # print(torchvision.__version__)
@@ -126,7 +128,99 @@ def print_train_time(start: float,
     return total_time
 start_time = timer()
 end_time = timer()
-print_train_time(start=start_time, end=end_time, device='cpu')
+# print_train_time(start=start_time, end=end_time, device='cpu')
+
+
+# def accuracy_fn(y_true, pred):
+#     correct = torch.eq(y_true, pred).sum().item()
+#     acc = (correct/len(pred))*100
+def accuracy_fn(y_true, pred):
+    correct = (pred == y_true).sum().item()
+    total = len(y_true)
+    return correct/total
+
+
+torch.manual_seed(42)
+train_time_start_on_cpu = timer()
+epochs = 3
+for epoch in tqdm(range(epochs)):
+    # print(f"epoch:{epoch}\n----")
+    train_loss = 0
+    for batch, (x,y) in enumerate(train_dataloader):
+        m0.train()
+        pred_y = m0(x)
+        loss = lf(pred_y, y)
+        train_loss += loss
+        optim.zero_grad()
+        loss.backward()
+        optim.step()
+        if batch % 400 == 0:
+            # print(f"looked at {batch * len(x)} / {len(train_dataloader.dataset)} samples.")
+          train_loss, test_acc = 0, 0
+m0.eval()
+with torch.inference_mode():
+    for x_test, y_test in test_dataloader:
+        test_pred = m0(x_test)
+        loss += lf(test_pred, y_test)
+        test_acc += accuracy_fn(y_true=y_test, pred=test_pred.argmax(dim=1))
+        # print(accuracy_fn(y_test, test_pred.argmax(dim=1)))
+        loss /= len(test_dataloader)
+        test_acc /= len(test_dataloader)
+        # print(f"\n Train loss:{train_loss:.4f} | loss:{loss:.4f}, Test acc:{test_acc} ")
+        train_time_end_on_cpu = timer()
+        total_train_time_m0 = print_train_time(start=train_time_start_on_cpu,
+                                               end= train_time_end_on_cpu,
+                                               device = str(next(m0.parameters())))
+        next(m0.parameters()).device
+        # print(next(m0.parameters()).device)
+
+torch.manual_seed(42)
+def eval_model(model: torch.nn.Module,
+               data_loader: torch.utils.data.DataLoader,
+               loss_fn: torch.nn.Module,
+               accuracy_fn):
+    loss,acc =0,0 
+    model.eval()
+    with torch.inference_mode():
+        for x,y in data_loader:
+            y_pred =model(x)
+            loss_fn = nn.CrossEntropyLoss()
+            loss += loss_fn(y_pred, y)
+            acc += accuracy_fn(y_true=y, pred=y_pred.argmax(dim=1))
+        loss /= len(data_loader)
+        acc /= len(data_loader)
+    return{"model_name": model.__class__.__name__,
+           "model_loss": loss.item(),
+           "model_acc": acc}
+model_0_results = eval_model(model=m0,
+                             data_loader=test_dataloader,
+                             loss_fn=loss,
+                             accuracy_fn=accuracy_fn)
+model_0_results
 
 
 
+class FashionMNISTModelv1(nn.Module):
+    def __init__(self,
+                 input_shapes: int,
+                 hidden_units: int,
+                 output_shapes: int):
+       super().__init__()
+       self.layer_stack = nn.Sequential(
+           nn.Flatten(),
+           nn.Linear(in_features=input_shapes,
+                     out_features=hidden_units),
+           nn.ReLU(),
+           nn.Linear(in_features=hidden_units,
+                     out_features=output_shapes),
+           nn.ReLU()
+
+    )
+    def forward(self, x: torch.Tensor):
+        return self.layer_stack(x)
+    
+torch.manual_seed(42)
+m1 = FashionMNISTModelv1(input_shapes=784,
+                         hidden_units=10,
+                         output_shapes=len(class_name)).to("cpu")
+# print(next(m0.parameters()).device)
