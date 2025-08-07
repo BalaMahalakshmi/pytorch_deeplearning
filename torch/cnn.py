@@ -71,3 +71,20 @@ model_2 = FashinonMNISTModelv2(input_shape=1,
                                output_shape=len(class_name)).to("cpu")
 
 # print(model_2)
+# print(model_2.state_dict())
+torch.manual_seed(42)
+images = torch.randn(size=(32,3,64,64))
+test_image = images[0]
+# print(f"image batch shape: {images.shape}")
+# print(f"single image shape: {test_image.shape}")
+# print(f"test image:\n {test_image}")
+
+conv_layer = nn.Conv2d(in_channels=3,
+                       out_channels=10,
+                       kernel_size=(3,3),
+                       stride=1,
+                       padding=0)
+con_output =conv_layer(test_image)
+# print(con_output)
+# print(test_image.unsqueeze(0).shape)
+
