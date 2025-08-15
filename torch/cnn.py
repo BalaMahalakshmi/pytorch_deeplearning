@@ -152,58 +152,58 @@ device ="cuda" if torch.cuda.is_available() else "cpu"
 #     print(f"Train loss: {train_loss:.5f} | Train_acc: {train_acc}")
 
     
-# def test_step(model: torch.nn.Module,
-#                data_loader: torch.utils.data.dataloader,
-#                loss_fn: torch.nn.Module,
-#                optimizer: torch.optim.Optimizer,
-#                accuracy_fn,
-#                device: torch.device = None):
-#     test_loss, test_acc = 0,0
-#     model.eval()
-#     with torch.inference_mode():
-#         for x, y in data_loader:
-#             x,y = x.to(device), y.to(device)
-#             test_pred = model(x)
-#             test_loss += loss_fn(test_pred, y)
-#             test_acc += accuracy_fn(y_true=y, pred=test_pred.argmax(dim=1))
-#     test_loss = test_loss/ len(data_loader)
-#     test_acc = test_acc / len(data_loader)
+def test_step(model: torch.nn.Module,
+               data_loader: torch.utils.data.dataloader,
+               loss_fn: torch.nn.Module,
+               optimizer: torch.optim.Optimizer,
+               accuracy_fn,
+               device: torch.device = None):
+    test_loss, test_acc = 0,0
+    model.eval()
+    with torch.inference_mode():
+        for x, y in data_loader:
+            x,y = x.to(device), y.to(device)
+            test_pred = model(x)
+            test_loss += loss_fn(test_pred, y)
+            test_acc += accuracy_fn(y_true=y, pred=test_pred.argmax(dim=1))
+    test_loss = test_loss/ len(data_loader)
+    test_acc = test_acc / len(data_loader)
 #     # print(f"Test loss: {test_loss:.5f} | Test acc: {test_acc}%n")
 
-# lf = nn.CrossEntropyLoss()
-# optim = torch.optim.SGD(params=m0.parameters(), lr=0.1)
-# # print(lf, optim)
+lf = nn.CrossEntropyLoss()
+optim = torch.optim.SGD(params=m0.parameters(), lr=0.1)
+# print(lf, optim)
 
-# def print_train_time(start: float,
-#                      end: float,
-#                      device: torch.device = None):
-#     total_time = end -start
-# def accuracy_fn(y_true, pred):
-#     correct = (pred == y_true).sum().item()
-#     total = len(y_true)
-#     return correct/total
+def print_train_time(start: float,
+                     end: float,
+                     device: torch.device = None):
+    total_time = end -start
+def accuracy_fn(y_true, pred):
+    correct = (pred == y_true).sum().item()
+    total = len(y_true)
+    return correct/total
 
-# torch.manual_seed(42)
-# train_time_start_on_m0 = timer()
-# epochs = 3
-# for epoch in tqdm(range(epochs)):
-#     print(f"epoch:{epoch}\n----")
-#     train_step(model=m0,
-#                data_loader=train_dataloader,
-#                loss_fn=lf,
-#                optimizer=optim,
-#                accuracy_fn=accuracy_fn,
-#                device=device)
-#     test_step(model=m0,
-#                data_loader=train_dataloader,
-#                loss_fn=lf,
-#                optimizer=optim,
-#                accuracy_fn=accuracy_fn,
-#                device=device)
-#     train_time_end_on_m0=timer()
-#     total_train_time_m0 = print_train_time(start=train_time_start_on_m0,
-#                                            end=train_time_end_on_m0,
-#                                            device=device)
-# m0
+torch.manual_seed(42)
+train_time_start_on_m0 = timer()
+epochs = 3
+for epoch in tqdm(range(epochs)):
+    print(f"epoch:{epoch}\n----")
+    train_step(model=m0,
+               data_loader=train_dataloader,
+               loss_fn=lf,
+               optimizer=optim,
+               accuracy_fn=accuracy_fn,
+               device=device)
+    test_step(model=m0,
+               data_loader=train_dataloader,
+               loss_fn=lf,
+               optimizer=optim,
+               accuracy_fn=accuracy_fn,
+               device=device)
+    train_time_end_on_m0=timer()
+    total_train_time_m0 = print_train_time(start=train_time_start_on_m0,
+                                           end=train_time_end_on_m0,
+                                           device=device)
+m0
 
 
