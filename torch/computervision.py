@@ -1,6 +1,6 @@
 import torch 
 from torch import nn 
-
+import pandas as pd
 import torchvision
 from torchvision import datasets
 from torchvision import transforms
@@ -291,7 +291,7 @@ for epoch in tqdm(range(epochs)):
     total_train_time_m1 = print_train_time(start=train_time_start_on_cpu,
                                            end=train_time_end_on_cpu,
                                            device=device)
-model_0_results
+# model_0_results
 
 
 m1_results = eval_model(model=m1,
@@ -299,7 +299,146 @@ m1_results = eval_model(model=m1,
                         loss_fn=lf,
                         accuracy_fn=accuracy_fn,
                         )
-m1_results
+# m1_results
+
+
+class FashinonMNISTModelv2(nn.Module):
+    def __init__(self, input_shape: int, hidden_units: int, output_shape: int):
+        super().__init__()
+        self.conv_block_1 = nn.Sequential(
+        nn.Conv2d(in_channels=input_shape,
+                  out_channels=hidden_units,
+                  kernel_size=3,
+                  stride=1,
+                  padding=1),
+        nn.ReLU(),
+        nn.Conv2d(in_channels=hidden_units,
+                  out_channels=hidden_units,
+                  kernel_size=3,
+                  stride=1,
+                  padding=1),
+        nn.ReLU(),
+        nn.MaxPool2d(kernel_size=2)
+        )
+        self.conv_block_2 = nn.Sequential(
+        nn.Conv2d(in_channels=hidden_units,
+                    out_channels=hidden_units,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1),
+        nn.ReLU(),
+        nn.Conv2d(in_channels=hidden_units,
+                  out_channels=hidden_units,
+                  kernel_size=3,
+                  stride=1,
+                  padding=1),
+        nn.ReLU(),
+        nn.MaxPool2d(kernel_size=2)
+        )
+
+        self.classifier=nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(in_features=hidden_units*0,
+                      out_features=output_shape)
+        )
+    def forward(self, x):
+        x = self.conv_block_1(x)
+        # print(x.shape)
+        x = self.conv_block_2(x)
+        return x
+
+
+torch.manual_seed(42)
+m2 = FashinonMNISTModelv2(input_shape=10,
+                         hidden_units=20,
+                         output_shape=len(class_name)).to("cpu")
+plt.imshow(img.squeeze(), cmap='grey')
+# plt.show()
+
+torch.manual_seed(42)
+train_time_start_on_m2 = timer()
+epochs = 3
+for epoch in tqdm(range(epochs)):
+    print(f"epoch:{epoch}\n----")
+    train_step(model=m2,
+               data_loader=train_dataloader,
+               loss_fn=lf,
+               optimizer=optim,
+               accuracy_fn=accuracy_fn,
+               device=device)
+    test_step(model=m2,
+               data_loader=train_dataloader,
+               loss_fn=lf,
+               optimizer=optim,
+               accuracy_fn=accuracy_fn,
+               device=device)
+    train_time_end_on_m2=timer()
+    total_train_time_m2 = print_train_time(start=train_time_start_on_m2,
+                                           end=train_time_end_on_m2,
+                                           device=device)
+m2
+
+compare_results = pd.DataFrame([model_0_results,
+                                m1_results,
+                                m2])
+# print(compare_results)
+
+compare_results["training_time"] = [total_train_time_m0,
+                                    total_train_time_m1,
+                                    total_train_time_m2]
+
+compare_results.set_index("model_name")("model_acc").plot(kind='barh')
+plt.xlabel("accuracy(%)")
+plt.ylabel("model")
+plt.show()
+
+#make and evaluate random pred with best model
+
+def make_pred(model: torch.nn.Module,
+              data: list,
+              device: torch.device=device):
+    pred_probs=[]
+    model.to(device)
+    model.eval()
+    with torch.inference_mode():
+        for sample in data:
+            sample = torch.unsqueeze(sample,dim=0).to(device)
+            pred_logit = model(sample)
+            pred_prob = torch.softmax(pred_logit.squeeze(),dim=0)
+            pred_probs.append(pred_prob.cpu())
+    return torch.stack(pred_probs)
+
+import random
+random.seed(42)
+test_samples =[]
+test_labels=[]
+for sample, label in random.sample(list(test_data), k=9):
+    test_samples.append(sample)
+    test_labels.append(label)
+test_samples[0].shape
+
+plt.imshow(test_samples[0].squeeze(), cmap="grey")
+plt.title(test_labels[0])
+plt.show()
+
+pred_probs=make_pred(model=m2,
+                     data=test_samples)
+print(pred_probs[:2])
+
+plt.figure(figsize=(9,9))
+nrows=3
+ncols=3
+for i, sample in enumerate(test_samples):
+    plt.subplot(nrows,ncols, i+1)
+    plt.imshow(sample.squeeze(),cmap='gray')
+    pred_label = class_name[pred_classes[i]]
+    truth_label = class_name[test_labels[i]]
+    title_text = f"pred: {pred_label} | truth: {truth_label}"
+    if pred_label == truth_label:
+        plt.title(title_text, fontsize=10, c='g')
+    else:
+        plt.title(title_text, fontsize=10, c='r')
+plt.axis(False)
 
 
 
